@@ -11,6 +11,18 @@ npm run dev -- --port 5173
 
 Open <http://127.0.0.1:5173/>.
 
+For the Sites production build:
+
+```bash
+npm run build
+```
+
+For the original standalone Vite static build:
+
+```bash
+npm run build:vite
+```
+
 ## Published URLs
 
 - Source: <https://github.com/damchungtien-lab/my-world-voxel-sandbox>
@@ -82,6 +94,7 @@ Creative mode is locked by default for guest and registered accounts. Enter crea
 - Sheep and zombie-style entities with wandering, chase, attack, food/coal drops, and day/night behavior.
 - LocalStorage save/load for world edits, oriented block metadata, crop growth, inventory, tool durability, enchantments, potion effects, entity/vehicle state, player level/experience, player state, time, and seed.
 - Automated hooks: `window.advanceTime(ms)`, `window.render_game_to_text()`, and development-only test helpers for audio, touch, vehicle, auth, and redstone state.
+- Sites deployment adapter: a minimal vinext `pages/` wrapper loads the same Three.js game on production hosting while keeping the original Vite development flow.
 
 ## Expansion Backlog
 

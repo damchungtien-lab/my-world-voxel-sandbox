@@ -71,6 +71,8 @@ Original prompt: /goal 帮我从零开始，构建一个我的世界的游戏，
 - Security note for publishing: the account system and creative code are local gameplay/profile features only, not server-backed authentication or anti-cheat. True cross-device accounts and protected saves need a backend database/auth provider.
 - Publishing setup in progress: public GitHub remote is `https://github.com/damchungtien-lab/my-world-voxel-sandbox.git`; Sites project is `appgprj_6a451d713bc88191b94554a32a105921`; `.openai/hosting.json` will pin this local project to that Sites project.
 - Verification for this slice: `npm run build` passed, `npm audit --json` reported 0 vulnerabilities, `npm run test:auth` passed guest/alice/bob save isolation and creative-code checks, and the required web-game Playwright client passed under `output/web-game` with latest gameplay screenshot/state inspection.
+- Added Sites deployment adapter: `npm run build` now uses vinext so Sites gets a supported production entrypoint, while `npm run build:vite` preserves the original Vite static build. A minimal `pages/index.jsx` wrapper renders the existing game DOM and loads the same `src/main.js` gameplay code.
+- Verification for deployment adapter: `npm run build`, `npm run build:vite`, and `npm audit --json` passed; local `vinext start` served `http://127.0.0.1:4174/`; the required web-game Playwright client passed against that production URL with screenshot/state inspection under `output/web-game`.
 
 ## TODO
 
