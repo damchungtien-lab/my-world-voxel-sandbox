@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My World - Voxel Survival Sandbox</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+
+      <div id="crosshair" aria-hidden="true"></div>
+
+      <section id="start-panel" class="panel visible">
+        <h1>MY WORLD</h1>
+        <p>第一人称体素生存沙盒</p>
+        <button id="play-button" type="button">进入世界</button>
+        <div class="control-grid">
+          <span>WASD</span><span>移动</span>
+          <span>鼠标</span><span>视角</span>
+          <span>左键</span><span>攻击/挖掘/弓箭射击</span>
+          <span>右键</span><span>放置/使用</span>
+          <span>右键</span><span>吃食物/锄地/播种/开门/睡觉</span>
+          <span>空格</span><span>跳跃</span>
+          <span>E</span><span>背包与合成</span>
+          <span>C</span><span>生存/创造</span>
+          <span>F</span><span>全屏</span>
+          <span>P</span><span>保存</span>
+        </div>
+      </section>
+
+      <section id="inventory-panel" class="panel inventory" aria-hidden="true">
+        <div class="panel-header">
+          <h2>背包与合成</h2>
+          <button id="close-inventory" type="button">关闭</button>
+        </div>
+        <div class="inventory-layout">
+          <div>
+            <h3>装备</h3>
+            <div id="equipment-list" class="equipment"></div>
+            <h3>附魔/升级</h3>
+            <div id="enchantment-list" class="recipes"></div>
+            <h3>酿造/药水</h3>
+            <div id="brewing-list" class="recipes"></div>
+          </div>
+          <div>
+            <h3>方块/物品</h3>
+            <div id="block-palette" class="palette"></div>
+          </div>
+          <div>
+            <h3>合成/冶炼</h3>
+            <div id="recipe-list" class="recipes"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="hud">
+        <div id="status-bars"></div>
+        <div id="hotbar"></div>
+        <div id="world-readout"></div>
+      </div>
+
+      <div id="touch-controls" aria-hidden="true">
+        <div id="touch-stick" class="touch-stick" aria-label="移动摇杆">
+          <div id="touch-stick-knob"></div>
+        </div>
+        <div class="touch-actions" aria-label="触控动作">
+          <button type="button" data-touch-action="jump">跳</button>
+          <button type="button" data-touch-action="mine">挖</button>
+          <button type="button" data-touch-action="use">用</button>
+          <button type="button" data-touch-action="inventory">包</button>
+        </div>
+      </div>
+
+      <div id="toast"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
