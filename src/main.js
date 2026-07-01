@@ -4,6 +4,15 @@ import * as THREE from "three";
 const canvas = document.querySelector("#game");
 const playButton = document.querySelector("#play-button");
 const startPanel = document.querySelector("#start-panel");
+const authForm = document.querySelector("#auth-form");
+const usernameInput = document.querySelector("#auth-username");
+const passwordInput = document.querySelector("#auth-password");
+const loginButton = document.querySelector("#login-button");
+const registerButton = document.querySelector("#register-button");
+const logoutButton = document.querySelector("#logout-button");
+const creativeCodeInput = document.querySelector("#creative-code");
+const unlockCreativeButton = document.querySelector("#unlock-creative-button");
+const authStatusEl = document.querySelector("#auth-status");
 const inventoryPanel = document.querySelector("#inventory-panel");
 const closeInventoryButton = document.querySelector("#close-inventory");
 const blockPalette = document.querySelector("#block-palette");
@@ -28,6 +37,10 @@ const RENDER_DISTANCE_BLOCKS = RENDER_DISTANCE * CHUNK_SIZE;
 const CHUNK_UNLOAD_DISTANCE = RENDER_DISTANCE + 3.2;
 const MAX_REACH = 6;
 const SAVE_KEY = "my-world-voxel-save-v1";
+const ACCOUNT_KEY = "my-world-accounts-v1";
+const SESSION_KEY = "my-world-current-account-v1";
+const GUEST_ACCOUNT = "guest";
+const CREATIVE_UNLOCK_CODE = "qwertyuiop";
 const EXPERIENCE_REWARDS = {
   sheep: 1,
   zombie: 5,
@@ -2075,9 +2088,225 @@ function blockFaceColor(id, face, x, y, z) {
   return adjustedColor(hex, factor);
 }
 
+function normalizeAccountName(name) {
+  return String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 24);
+}
+
+function isReservedAccountName(name) {
+  return normalizeAccountName(name) === GUEST_ACCOUNT;
+}
+
+function loadAccounts() {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAccounts(accounts) {
+  localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
+}
+
+function accountRecord(name = currentAccountName) {
+  return loadAccounts()[normalizeAccountName(name)] ?? null;
+}
+
+function creativeUnlockedFor(name = currentAccountName) {
+  if (normalizeAccountName(name) === GUEST_ACCOUNT) {
+    return localStorage.getItem(`${ACCOUNT_KEY}:guest-creative`) === "true";
+  }
+  return Boolean(accountRecord(name)?.creativeUnlocked);
+}
+
+function setCreativeUnlockedFor(name = currentAccountName, unlocked = true) {
+  const account = normalizeAccountName(name) || GUEST_ACCOUNT;
+  if (account === GUEST_ACCOUNT) {
+    localStorage.setItem(`${ACCOUNT_KEY}:guest-creative`, unlocked ? "true" : "false");
+    return true;
+  }
+  const accounts = loadAccounts();
+  if (!accounts[account]) return false;
+  accounts[account].creativeUnlocked = Boolean(unlocked);
+  accounts[account].creativeUnlockedAt = unlocked ? new Date().toISOString() : null;
+  saveAccounts(accounts);
+  return true;
+}
+
+function accountSaveKey(account = currentAccountName) {
+  const name = normalizeAccountName(account) || GUEST_ACCOUNT;
+  return `${SAVE_KEY}:${name}`;
+}
+
+function migrateLegacySave() {
+  const legacy = localStorage.getItem(SAVE_KEY);
+  const guestKey = accountSaveKey(GUEST_ACCOUNT);
+  if (legacy && !localStorage.getItem(guestKey)) localStorage.setItem(guestKey, legacy);
+}
+
+function currentSessionAccount() {
+  return normalizeAccountName(localStorage.getItem(SESSION_KEY)) || GUEST_ACCOUNT;
+}
+
+function setCurrentAccount(name) {
+  const previous = currentAccountName;
+  currentAccountName = normalizeAccountName(name) || GUEST_ACCOUNT;
+  localStorage.setItem(SESSION_KEY, currentAccountName);
+  updateAuthUi();
+  return previous !== currentAccountName;
+}
+
+function queueAccountForNextLoad(name) {
+  const next = normalizeAccountName(name) || GUEST_ACCOUNT;
+  if (next === currentAccountName) {
+    updateAuthUi();
+    return false;
+  }
+  if (typeof saveGame === "function") saveGame(true);
+  localStorage.setItem(SESSION_KEY, next);
+  return true;
+}
+
+function switchAccountAndReload(name) {
+  const changed = queueAccountForNextLoad(name);
+  if (changed) window.location.reload();
+  return changed;
+}
+
+async function hashPassword(password, salt) {
+  const text = `${salt}:${password}`;
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+function makeSalt() {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+function setAuthStatus(text) {
+  if (authStatusEl) authStatusEl.textContent = text;
+}
+
+function updateAuthUi() {
+  const signedIn = currentAccountName !== GUEST_ACCOUNT;
+  const creativeUnlocked = creativeUnlockedFor(currentAccountName);
+  if (usernameInput) usernameInput.value = signedIn ? currentAccountName : usernameInput.value;
+  if (logoutButton) logoutButton.disabled = !signedIn;
+  if (playButton) playButton.textContent = signedIn ? `进入 ${currentAccountName} 的世界` : "游客进入世界";
+  if (unlockCreativeButton) unlockCreativeButton.disabled = creativeUnlocked;
+  setAuthStatus(
+    signedIn
+      ? `当前账号: ${currentAccountName} | 创造模式${creativeUnlocked ? "已解锁" : "未解锁"}`
+      : `游客模式: 进度只保存在本浏览器 | 创造模式${creativeUnlocked ? "已解锁" : "未解锁"}`,
+  );
+}
+
+async function registerAccount() {
+  const username = normalizeAccountName(usernameInput?.value);
+  const password = passwordInput?.value ?? "";
+  if (username.length < 3) {
+    setAuthStatus("账号至少 3 位，可用英文、数字、_、-");
+    return false;
+  }
+  if (isReservedAccountName(username)) {
+    setAuthStatus("guest 是游客模式保留名，不能注册");
+    return false;
+  }
+  if (password.length < 4) {
+    setAuthStatus("密码至少 4 位");
+    return false;
+  }
+  const accounts = loadAccounts();
+  if (accounts[username]) {
+    setAuthStatus("账号已存在，直接登录即可");
+    return false;
+  }
+  const salt = makeSalt();
+  accounts[username] = {
+    salt,
+    hash: await hashPassword(password, salt),
+    creativeUnlocked: false,
+    createdAt: new Date().toISOString(),
+  };
+  saveAccounts(accounts);
+  const changed = switchAccountAndReload(username);
+  passwordInput.value = "";
+  setAuthStatus(`已注册并登录: ${username}`);
+  return true;
+}
+
+async function loginAccount() {
+  const username = normalizeAccountName(usernameInput?.value);
+  const password = passwordInput?.value ?? "";
+  const accounts = loadAccounts();
+  const account = accounts[username];
+  if (!account) {
+    setAuthStatus("账号不存在，可以先注册");
+    return false;
+  }
+  const hash = await hashPassword(password, account.salt);
+  if (hash !== account.hash) {
+    setAuthStatus("密码不正确");
+    return false;
+  }
+  const changed = switchAccountAndReload(username);
+  passwordInput.value = "";
+  setAuthStatus(`已登录: ${username}`);
+  return true;
+}
+
+function logoutAccount() {
+  switchAccountAndReload(GUEST_ACCOUNT);
+  if (passwordInput) passwordInput.value = "";
+  setAuthStatus("已退出，当前为游客模式");
+}
+
+function unlockCreativeMode() {
+  const code = creativeCodeInput?.value ?? "";
+  if (code !== CREATIVE_UNLOCK_CODE) {
+    setAuthStatus("创造码不正确");
+    return false;
+  }
+  setCreativeUnlockedFor(currentAccountName, true);
+  if (creativeCodeInput) creativeCodeInput.value = "";
+  updateAuthUi();
+  showToast("创造模式已解锁");
+  return true;
+}
+
+function setPlayerMode(mode, showMessage = true) {
+  if (mode === "creative" && !creativeUnlockedFor(currentAccountName)) {
+    if (player) player.mode = "survival";
+    if (showMessage) {
+      showToast("创造模式需要先输入创造码");
+      setAuthStatus("输入创造码 qwertyuiop 后才能开启创造模式");
+    }
+    if (typeof renderInventory === "function") renderInventory();
+    if (typeof renderHud === "function") renderHud();
+    return false;
+  }
+  player.mode = mode === "creative" ? "creative" : "survival";
+  if (showMessage) showToast(player.mode === "creative" ? "创造模式" : "生存模式");
+  if (typeof renderInventory === "function") renderInventory();
+  if (typeof renderHud === "function") renderHud();
+  return true;
+}
+
+let currentAccountName = GUEST_ACCOUNT;
+migrateLegacySave();
+currentAccountName = currentSessionAccount();
+
 function loadSavedState() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(accountSaveKey());
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -4346,6 +4575,7 @@ scene.add(sunMesh, moonMesh);
 const world = new World(scene, seed, savedState);
 blockColorWorld = world;
 const player = new Player(world, savedState);
+if (player.mode === "creative" && !creativeUnlockedFor(currentAccountName)) player.mode = "survival";
 const input = new Input();
 const entities = new EntityManager(scene, world, player);
 if (!entities.restore(savedState?.entities)) entities.spawnInitial();
@@ -5503,7 +5733,7 @@ function saveGame(silent = false) {
     entities: entities.serialize(),
     savedAt: new Date().toISOString(),
   };
-  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  localStorage.setItem(accountSaveKey(), JSON.stringify(data));
   if (!silent) {
     showToast("世界已保存");
     playSound("save");
@@ -5644,6 +5874,12 @@ window.render_game_to_text = () => {
   return JSON.stringify({
     mode: gameStarted ? (inventoryOpen ? "inventory" : "playing") : "start",
     coordinateSystem: "x east/west, y up, z north/south; block coords use floor(world position)",
+    account: {
+      name: currentAccountName,
+      signedIn: currentAccountName !== GUEST_ACCOUNT,
+      creativeUnlocked: creativeUnlockedFor(currentAccountName),
+      saveKey: accountSaveKey(),
+    },
     player: {
       x: Number(player.position.x.toFixed(2)),
       y: Number(player.position.y.toFixed(2)),
@@ -5853,7 +6089,7 @@ window.render_game_to_text = () => {
   });
 };
 
-window.gameTestApi = {
+const gameTestApi = {
   setSelectedItem(id) {
     id = Number(id);
     if (!isKnownItem(id)) return false;
@@ -6168,7 +6404,7 @@ window.gameTestApi = {
     return true;
   },
   savedData() {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(accountSaveKey());
     return raw ? JSON.parse(raw) : null;
   },
   soundStatus() {
@@ -6253,16 +6489,68 @@ window.gameTestApi = {
     return timeOfDay;
   },
   setMode(mode) {
-    player.mode = mode === "creative" ? "creative" : "survival";
-    renderInventory();
-    renderHud();
+    setPlayerMode(mode === "creative" ? "creative" : "survival");
     return player.mode;
+  },
+  authState() {
+    return {
+      account: currentAccountName,
+      creativeUnlocked: creativeUnlockedFor(currentAccountName),
+      saveKey: accountSaveKey(),
+      knownAccounts: Object.keys(loadAccounts()).sort(),
+    };
+  },
+  async registerAccount(username, password) {
+    username = normalizeAccountName(username);
+    password = String(password);
+    const accounts = loadAccounts();
+    if (!username || username.length < 3 || password.length < 4 || isReservedAccountName(username) || accounts[username]) return false;
+    const salt = makeSalt();
+    accounts[username] = {
+      salt,
+      hash: await hashPassword(password, salt),
+      creativeUnlocked: false,
+      createdAt: new Date().toISOString(),
+    };
+    saveAccounts(accounts);
+    queueAccountForNextLoad(username);
+    return true;
+  },
+  async loginAccount(username, password) {
+    username = normalizeAccountName(username);
+    password = String(password);
+    const account = loadAccounts()[username];
+    if (!account) return false;
+    const hash = await hashPassword(password, account.salt);
+    if (hash !== account.hash) return false;
+    queueAccountForNextLoad(username);
+    return true;
+  },
+  logoutAccount() {
+    logoutAccount();
+    return this.authState();
+  },
+  unlockCreative(code = "") {
+    if (creativeCodeInput) creativeCodeInput.value = String(code);
+    return unlockCreativeMode();
   },
   getIds() {
     return { BLOCK, ITEM };
   },
 };
+if (import.meta.env.DEV) {
+  window.gameTestApi = gameTestApi;
+}
 
+authForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await loginAccount();
+});
+registerButton?.addEventListener("click", async () => {
+  await registerAccount();
+});
+logoutButton?.addEventListener("click", logoutAccount);
+unlockCreativeButton?.addEventListener("click", unlockCreativeMode);
 playButton.addEventListener("click", startGame);
 canvas.addEventListener("click", () => {
   if (!gameStarted) startGame();
@@ -6349,10 +6637,7 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.code === "KeyE") setInventoryOpen(!inventoryOpen);
   if (event.code === "KeyC") {
-    player.mode = player.mode === "creative" ? "survival" : "creative";
-    showToast(player.mode === "creative" ? "创造模式" : "生存模式");
-    renderInventory();
-    renderHud();
+    setPlayerMode(player.mode === "creative" ? "survival" : "creative");
   }
   if (event.code === "KeyF") {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
@@ -6398,6 +6683,7 @@ world.updatePressurePlates(player, entities.entities);
 world.updateRedstone();
 world.buildDirty(128);
 updateCamera();
+updateAuthUi();
 renderInventory();
 renderHud();
 requestAnimationFrame(frame);

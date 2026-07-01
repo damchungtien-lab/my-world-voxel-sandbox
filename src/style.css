@@ -109,6 +109,76 @@ body {
   font-size: 17px;
 }
 
+.auth-card {
+  display: grid;
+  gap: 12px;
+  width: min(520px, 100%);
+  margin: 0 auto 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 14px;
+}
+
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.auth-row label {
+  display: block;
+  margin-bottom: 5px;
+  color: #d6ddc5;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.auth-row input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff9dd;
+  font: inherit;
+  padding: 9px 10px;
+}
+
+.auth-row input:focus {
+  border-color: #f0c861;
+  outline: none;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-actions button {
+  min-width: 88px;
+}
+
+.auth-code-row {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.auth-code-row button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.auth-status {
+  min-height: 18px;
+  color: #fff7c7;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
 button {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
@@ -431,6 +501,14 @@ button:focus-visible {
 }
 
 @media (max-width: 720px) {
+  .auth-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-code-row {
+    grid-template-columns: 1fr;
+  }
+
   .inventory-layout {
     grid-template-columns: 1fr;
   }

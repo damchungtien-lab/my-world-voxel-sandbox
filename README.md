@@ -11,6 +11,19 @@ npm run dev -- --port 5173
 
 Open <http://127.0.0.1:5173/>.
 
+## Published URLs
+
+- Source: <https://github.com/damchungtien-lab/my-world-voxel-sandbox>
+- Live site: deployment pending
+
+## Accounts and Creative Mode
+
+The start screen includes browser-local registration and login. Account records are stored in `localStorage` with salted SHA-256 password hashes, and each account gets its own local save key (`my-world-voxel-save-v1:<account>`). Guest mode is still available and saves to a separate guest profile.
+
+This is local profile separation, not server-backed authentication. Saves and creative unlocks do not sync across devices, and a technical user can edit their own browser storage.
+
+Creative mode is locked by default for guest and registered accounts. Enter creative code `qwertyuiop` on the start screen to unlock creative mode for the current local account/browser profile.
+
 ## Controls
 
 - `WASD` or arrow keys: move
@@ -32,7 +45,7 @@ Open <http://127.0.0.1:5173/>.
 - `Shift`: sprint
 - `E`: inventory and crafting
 - Advanced recipes need a nearby crafting table; smelting recipes need a nearby furnace.
-- `C`: survival/creative mode
+- `C`: survival/creative mode after creative mode has been unlocked with the creative code
 - `F`: fullscreen
 - `P`: save world
 - Mouse wheel or `1`-`9`: select hotbar slot
@@ -45,7 +58,8 @@ Open <http://127.0.0.1:5173/>.
 - Efficient exposed-face chunk meshes with block highlighting.
 - First-person movement, jumping, gravity, collision, fall damage, water slowdown, health, hunger, oxygen, respawn.
 - Mobile touch controls with a virtual joystick, touch look, and jump/mine/use/inventory action buttons.
-- Mining, placing, hotbar, inventory, hand/table/furnace-gated crafting, creative/survival toggle, and survival inventory filtering for owned items.
+- Mining, placing, hotbar, inventory, hand/table/furnace-gated crafting, creative/survival toggle gated by a local creative unlock code, and survival inventory filtering for owned items.
+- Browser-local accounts with register/login/logout, separate per-account progress, guest fallback, and account state in `render_game_to_text()`.
 - Tool tiers and durability for pickaxes, shovel, axe, hoe actions, and wooden sword combat.
 - First-person held-item rendering with swing feedback for blocks, tools, bow, and sword.
 - Iron armor equipment slots with armor points, durability, equipment/unequip flow, and damage reduction.
@@ -67,9 +81,9 @@ Open <http://127.0.0.1:5173/>.
 - Day/night lighting, sun/moon, fog and simple weather field.
 - Sheep and zombie-style entities with wandering, chase, attack, food/coal drops, and day/night behavior.
 - LocalStorage save/load for world edits, oriented block metadata, crop growth, inventory, tool durability, enchantments, potion effects, entity/vehicle state, player level/experience, player state, time, and seed.
-- Automated hooks: `window.advanceTime(ms)`, `window.render_game_to_text()`, and test helpers for audio, touch, vehicle, and redstone state.
+- Automated hooks: `window.advanceTime(ms)`, `window.render_game_to_text()`, and development-only test helpers for audio, touch, vehicle, auth, and redstone state.
 
 ## Expansion Backlog
 
 - Deeper redstone components such as comparators, sticky pistons, richer redstone scheduling, curved/sloped rails, larger villages, more structures, dimensions, stronger biome generation.
-- Multiplayer, chunk persistence files, texture atlas.
+- Server-backed accounts/cloud saves, multiplayer, chunk persistence files, texture atlas.

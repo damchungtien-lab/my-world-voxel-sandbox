@@ -14,6 +14,31 @@
       <section id="start-panel" class="panel visible">
         <h1>MY WORLD</h1>
         <p>第一人称体素生存沙盒</p>
+        <form id="auth-form" class="auth-card" autocomplete="on">
+          <div class="auth-row">
+            <div>
+              <label for="auth-username">账号</label>
+              <input id="auth-username" name="username" type="text" minlength="3" maxlength="24" autocomplete="username" />
+            </div>
+            <div>
+              <label for="auth-password">密码</label>
+              <input id="auth-password" name="password" type="password" minlength="4" autocomplete="current-password" />
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button id="login-button" type="submit">登录</button>
+            <button id="register-button" type="button">注册</button>
+            <button id="logout-button" type="button">退出</button>
+          </div>
+          <div class="auth-row auth-code-row">
+            <div>
+              <label for="creative-code">创造码</label>
+              <input id="creative-code" name="creative-code" type="password" autocomplete="off" />
+            </div>
+            <button id="unlock-creative-button" type="button">解锁创造</button>
+          </div>
+          <div id="auth-status" class="auth-status"></div>
+        </form>
         <button id="play-button" type="button">进入世界</button>
         <div class="control-grid">
           <span>WASD</span><span>移动</span>
