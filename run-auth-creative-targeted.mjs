@@ -15,7 +15,7 @@ page.on("console", (msg) => {
 page.on("pageerror", (err) => errors.push({ type: "pageerror", text: String(err) }));
 
 async function load() {
-  await page.goto("http://127.0.0.1:5173/?testApi=1", { waitUntil: "domcontentloaded" });
+  await page.goto("http://127.0.0.1:5173/", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(350);
 }
 
