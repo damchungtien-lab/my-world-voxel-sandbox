@@ -3,4 +3,5 @@ dist/
 output/
 .playwright-cli/
 .tmp/
+.wrangler/
 *.log

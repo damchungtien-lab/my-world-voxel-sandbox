@@ -69,7 +69,7 @@ Original prompt: /goal 帮我从零开始，构建一个我的世界的游戏，
 - Added browser-local account/auth slice: local username/password registration and login, salted SHA-256 password hashes in LocalStorage, per-account save keys, guest fallback, account state in `render_game_to_text()`, and creative-mode unlock state per account.
 - Added creative-mode gate: guest and registered accounts stay in survival by default, pressing `C` routes through the unlock check, and entering `qwertyuiop` unlocks creative mode for the current local account/browser profile.
 - Security note for publishing: the account system and creative code are local gameplay/profile features only, not server-backed authentication or anti-cheat. True cross-device accounts and protected saves need a backend database/auth provider.
-- Publishing setup in progress: public GitHub remote is `https://github.com/damchungtien-lab/my-world-voxel-sandbox.git`; Sites project is `appgprj_6a451d713bc88191b94554a32a105921`; `.openai/hosting.json` will pin this local project to that Sites project.
+- Publishing setup in progress: public GitHub remote is `https://github.com/damchungtien-lab/my-world-voxel-sandbox.git`; Sites project is `appgprj_6a451d713bc88191b94554a32a105921`; `.openai/hosting.json` pins this local project to that Sites project.
 - Verification for this slice: `npm run build` passed, `npm audit --json` reported 0 vulnerabilities, `npm run test:auth` passed guest/alice/bob save isolation and creative-code checks, and the required web-game Playwright client passed under `output/web-game` with latest gameplay screenshot/state inspection.
 - Added Sites deployment adapter: `npm run build` now uses vinext so Sites gets a supported production entrypoint, while `npm run build:vite` preserves the original Vite static build. A minimal `pages/index.jsx` wrapper renders the existing game DOM and loads the same `src/main.js` gameplay code.
 - Verification for deployment adapter: `npm run build`, `npm run build:vite`, and `npm audit --json` passed; local `vinext start` served `http://127.0.0.1:4174/`; the required web-game Playwright client passed against that production URL with screenshot/state inspection under `output/web-game`.
@@ -81,4 +81,4 @@ Original prompt: /goal 帮我从零开始，构建一个我的世界的游戏，
 - Vehicle follow-up: add curved/sloped rails, boat collision with entities, passenger persistence, and richer vehicle break physics.
 - Redstone follow-up: add comparators, sticky pistons, stronger local redstone scheduling, and broader contraption regression tests.
 - Structure follow-up: add a small single-chunk structure registry before larger villages or dimensions.
-- Publishing TODO: push the current source to the public GitHub repository and deploy a playable website build through Sites.
+- Publishing TODO: commit the final Sites config/build metadata, push to GitHub, deploy through Sites, then update the README live-site URL.

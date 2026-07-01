@@ -2,12 +2,21 @@
   "name": "my-world-voxel-sandbox",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damchungtien-lab/my-world-voxel-sandbox.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vinext build",
-    "build:vite": "vite build",
-    "preview": "vite preview --host 127.0.0.1",
+    "build:vite": "vite build --config vite.vanilla.config.js",
+    "preview": "vinext start -H 127.0.0.1",
+    "preview:vite": "vite preview --host 127.0.0.1",
     "test:auth": "node ./run-auth-creative-targeted.mjs"
   },
   "dependencies": {
@@ -18,7 +27,9 @@
   "devDependencies": {
     "@emnapi/core": "1.11.1",
     "@emnapi/runtime": "1.11.1",
+    "@cloudflare/vite-plugin": "^1.42.4",
     "@vitejs/plugin-react": "^6.0.3",
+    "@vinext/cloudflare": "^0.2.0",
     "vinext": "^0.2.0",
     "vite": "^8.1.0"
   }
